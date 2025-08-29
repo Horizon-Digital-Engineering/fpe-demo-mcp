@@ -1,8 +1,10 @@
-# FPE Demo MCP — Real FF3 FPE Demo Server
+# FPE Demo MCP — FF3 Format Preserving Encryption Server
+
+![Version](https://img.shields.io/github/v/tag/Horizon-Digital-Engineering/fpe-demo-mcp?label=version&color=blue) ![License](https://img.shields.io/github/license/Horizon-Digital-Engineering/fpe-demo-mcp?color=green) ![CI](https://github.com/Horizon-Digital-Engineering/fpe-demo-mcp/actions/workflows/ci.yml/badge.svg) ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen) ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue)
 
 **FPE Demo MCP** is a lightweight MCP (Model Context Protocol) server that demonstrates **authentication** and **format‑preserving encryption (FF3 FPE)** in a clean, readable implementation. MCP is a JSON-RPC protocol that enables LLMs to securely call external tools and services.
 
-- ✅ Real FF3 FPE over **digits** (radix‑10)
+- ✅ FF3 FPE over **digits** (radix‑10)
 - 🔐 Auth modes: `authless`, `debug`, `test` (shared secret *or* JWT), `production` (JWT only)
 - 🏷️ `ENC_FPE:` prefix so encrypted values are obvious in logs/demos
 - 🌐 Both stdio (local) and HTTP (web) transports
@@ -75,7 +77,7 @@ echo '{
 ```bash
 echo '{
   "jsonrpc":"2.0","id":2,"method":"tools/call",
-  "params":{"name":"fpe_decrypt","arguments":{"value":"ENC_FPE:684002757"}}
+  "params":{"name":"fpe_decrypt","arguments":{"value":"ENC_FPE:096616337"}}
 }' | node dist/src/stdio-server.js
 ```
 
