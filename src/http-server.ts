@@ -24,7 +24,7 @@ const HOST = process.env.HOST ?? "127.0.0.1";
 // Get version from package.json safely
 let version = "0.0.0";
 try {
-  const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url)).toString());
+  const pkg = JSON.parse(readFileSync("package.json", "utf8"));
   version = pkg.version ?? version;
 } catch { /* ignore */ }
 const AUTH_MODE: AuthMode = (process.env.AUTH_MODE as AuthMode) || "authless";

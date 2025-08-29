@@ -21,7 +21,9 @@
     "serve:http": "AUTH_MODE=authless PORT=8765 npm run start:http",
     "serve:http:debug": "AUTH_MODE=debug PORT=8765 npm run start:http",
     "serve:http:test": "AUTH_MODE=test PORT=8765 npm run start:http",
-    "serve:http:prod": "AUTH_MODE=production PORT=8765 npm run start:http"
+    "serve:http:prod": "AUTH_MODE=production PORT=8765 npm run start:http",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [
     "mcp",
@@ -30,7 +32,14 @@
     "ff3",
     "data-protection",
     "claude",
-    "llm"
+    "llm",
+    "json-rpc",
+    "encryption",
+    "demo",
+    "chatgpt",
+    "openai",
+    "authentication",
+    "jwt"
   ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
@@ -43,6 +52,9 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.41.0",
+    "@typescript-eslint/parser": "^8.41.0",
+    "eslint": "^9.34.0",
     "typescript": "^5.0.0"
   },
   "engines": {
@@ -52,6 +64,10 @@
     "type": "git",
     "url": "https://github.com/Horizon-Digital-Engineering/fpe-demo-mcp.git"
   },
+  "bugs": {
+    "url": "https://github.com/Horizon-Digital-Engineering/fpe-demo-mcp/issues"
+  },
+  "homepage": "https://github.com/Horizon-Digital-Engineering/fpe-demo-mcp#readme",
   "license": "BUSL-1.1",
   "author": "Leslie Gutschow <leslie.gutschow@horizondigital.dev>"
 }

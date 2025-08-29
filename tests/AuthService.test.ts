@@ -29,7 +29,7 @@ function testMode(authMode: string, testCases: TestCase[]): Promise<void> {
     
     let requestId = 1;
     let testIndex = 0;
-    let responses: any[] = [];
+    const responses: any[] = [];
     
     function sendRequest(method: string, params?: any): void {
       const request: MCPRequest = {
