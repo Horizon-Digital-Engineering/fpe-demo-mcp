@@ -1,0 +1,33 @@
+spec:
+  name: fpe-demo-mcp
+  services:
+  - name: fpe-demo-mcp-service
+    environment_slug: node-js
+    git:
+      branch: main
+      repo_clone_url: https://github.com/Horizon-Digital-Engineering/fpe-demo-mcp.git
+    build_command: npm ci && npm run build
+    run_command: node dist/src/http-server.js
+    http_port: 8765
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-1gb
+    source_dir: /
+    envs:
+    - key: HOST
+      value: "0.0.0.0"
+      scope: RUN_AND_BUILD_TIME
+    - key: PORT
+      value: "8765"
+      scope: RUN_AND_BUILD_TIME
+    - key: AUTH_MODE
+      value: "authless"
+      scope: RUN_AND_BUILD_TIME
+    - key: AUTH_TOKEN
+      value: "demo-secret"
+      scope: RUN_AND_BUILD_TIME
+    - key: FPE_KEY
+      value: "00112233445566778899aabbccddeeff"
+      scope: RUN_AND_BUILD_TIME
+    - key: FPE_TWEAK
+      value: "abcdef12345678"
+      scope: RUN_AND_BUILD_TIME

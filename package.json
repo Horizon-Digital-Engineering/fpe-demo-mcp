@@ -1,0 +1,57 @@
+{
+  "name": "fpe-demo-mcp",
+  "version": "1.0.0",
+  "description": "Demo MCP server showing FF3 Format Preserving Encryption + authentication patterns",
+  "type": "module",
+  "main": "dist/src/stdio-server.js",
+  "bin": {
+    "fpe-demo-mcp": "dist/src/stdio-server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "clean-all": "rm -rf dist node_modules package-lock.json",
+    "start": "npm run build && node dist/src/stdio-server.js",
+    "start:http": "npm run build && node dist/src/http-server.js",
+    "dev": "tsc --watch",
+    "test": "npm run build && node dist/tests/FPEService.test.js && node dist/tests/AuthService.test.js && node dist/tests/stdio-server.test.js && node dist/tests/http-server.test.js",
+    "start:debug": "AUTH_MODE=debug npm start",
+    "start:test": "AUTH_MODE=test npm start",
+    "start:prod": "AUTH_MODE=production npm start",
+    "serve:http": "AUTH_MODE=authless PORT=8765 npm run start:http",
+    "serve:http:debug": "AUTH_MODE=debug PORT=8765 npm run start:http",
+    "serve:http:test": "AUTH_MODE=test PORT=8765 npm run start:http",
+    "serve:http:prod": "AUTH_MODE=production PORT=8765 npm run start:http"
+  },
+  "keywords": [
+    "mcp",
+    "format-preserving-encryption",
+    "fpe",
+    "ff3",
+    "data-protection",
+    "claude",
+    "llm"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "express": "^5.1.0",
+    "ff3": "^1.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.6",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Horizon-Digital-Engineering/fpe-demo-mcp.git"
+  },
+  "license": "BUSL-1.1",
+  "author": "Leslie Gutschow <leslie.gutschow@horizondigital.dev>"
+}
