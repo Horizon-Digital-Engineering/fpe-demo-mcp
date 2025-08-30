@@ -31,6 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG.md following Keep a Changelog format
 
 ### Security
-- Enterprise-ready security patterns
+- Demo security patterns
 - Proper token validation and error handling
 - No secrets exposed in logs or responses

@@ -53,3 +53,54 @@ flowchart LR
 - **Tools:** `fpe_encrypt`, `fpe_decrypt`
 - **Auth modes:** authless (default), debug (open), test (shared secret OR JWT), production (JWT only for stricter testing)
 - **FPE:** MYSTO FF3 radix-10, 6-56 digit range, ENC_FPE: prefix
+
+## HTTP Server Implementation Details
+
+### Stateful Session Management ✅
+Our HTTP server follows the **official MCP StreamableHTTPServerTransport stateful pattern**:
+
+- **Session Storage:** `transports` map keyed by `Mcp-Session-Id`
+- **Transport Reuse:** Same transport handles multiple requests per session
+- **Server Per Session:** New `McpServer` instance per session (MCP protocol requirement)
+- **Session Lifecycle:** Initialize → reuse transport → cleanup on close
+
+### Key Design Decisions
+
+**Architecture Pattern:**
+```typescript
+// STATEFUL: Transport reuse per session
+if (sessionId && transports[sessionId]) {
+  transport = transports[sessionId];  // ← Reuse existing
+} else {
+  // NEW: Server + transport per session
+  transport = new StreamableHTTPServerTransport({...});
+  const server = getServer();  // ← New server per session
+  await server.connect(transport);
+}
+```
+
+**Polish Features:**
+- **Container-friendly:** Binds to `0.0.0.0` (not `127.0.0.1`)
+- **Case-insensitive headers:** `req.get('Mcp-Session-Id')` 
+- **Proper CORS credentials:** Only set when origin is specific (not `*`)
+- **Session ID echoing:** Headers included in responses for convenience
+
+**Additional Features (Demo Implementation):**
+- ✅ Session-based audit logging capability
+- ✅ Multi-environment authentication modes  
+- ✅ SSE support via GET/DELETE endpoints
+- ✅ Transport lifecycle management
+- ✅ Graceful shutdown handling (SIGTERM)
+
+### Why Stateful vs Stateless?
+
+**Our Choice: Stateful** because:
+- Better for MCP protocol (official recommended pattern)
+- Supports server-to-client notifications  
+- Enables session tracking for audit/security
+- More suitable for advanced features (rate limiting, etc.)
+
+**Not Stateless** because:
+- Stateless creates new server+transport per request (more overhead)
+- No SSE support, no session correlation
+- Less suitable for audit/tracking requirements
