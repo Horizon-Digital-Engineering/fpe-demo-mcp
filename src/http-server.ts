@@ -257,7 +257,21 @@ app.post("/mcp", async (req, res) => {
   }
 
   // Handle the request
-  await transport.handleRequest(req, res, req.body);
+  try {
+    await transport.handleRequest(req, res, req.body);
+  } catch (err) {
+    console.error("POST request error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        error: {
+          code: -32603,
+          message: "Internal Error"
+        },
+        id: req.body?.id || null
+      });
+    }
+  }
 });
 
 // GET endpoint for server→client notifications
