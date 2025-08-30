@@ -88,13 +88,13 @@ class MCPServer {
         tools: [
           {
             name: 'fpe_encrypt',
-            description: 'Encrypt digits using FF3 Format Preserving Encryption. MYSTO FF3 LIMITATIONS: radix-10 only (digits 0-9), 6-56 digit length range, no mixed formats (e.g., A123456 cannot preserve letter+digits). Input normalized to digits only - all non-digits stripped. Returns ENC_FPE:digits format. NO format reconstruction. Example: "123-45-6789" → normalize to "123456789" → encrypt → "ENC_FPE:096616337"',
+            description: FPEService.TOOL_DESCRIPTIONS.fpe_encrypt.description,
             inputSchema: {
               type: 'object',
               properties: {
                 value: {
                   type: 'string',
-                  description: 'Input containing digits to encrypt. Non-digits automatically stripped during normalization. Must result in 6-56 digits after normalization for MYSTO FF3 limits. Output will be pure digits only - no formatting preserved.'
+                  description: FPEService.TOOL_DESCRIPTIONS.fpe_encrypt.inputDescription
                 },
                 user_token: {
                   type: 'string',
@@ -106,13 +106,13 @@ class MCPServer {
           },
           {
             name: 'fpe_decrypt',
-            description: 'Decrypt FF3-encrypted digits back to original digits. Only works with ENC_FPE:digits format from fpe_encrypt tool. Returns pure digits only - no formatting. If you need formatted output, you must reconstruct it yourself from the returned digits.',
+            description: FPEService.TOOL_DESCRIPTIONS.fpe_decrypt.description,
             inputSchema: {
               type: 'object',
               properties: {
                 value: {
                   type: 'string',
-                  description: 'Previously encrypted value in ENC_FPE:digits format from fpe_encrypt tool. Must contain only digits after the prefix. Example: "ENC_FPE:096616337" returns "123456789"'
+                  description: FPEService.TOOL_DESCRIPTIONS.fpe_decrypt.inputDescription
                 },
                 user_token: {
                   type: 'string',

@@ -69,11 +69,10 @@ const getServer = (): McpServer => {
     "fpe_encrypt",
     {
       title: "FF3 FPE Encrypt",
-      description:
-        "Encrypt digits using FF3 (radix-10, 6–56 digits). Input normalized to digits only. Returns ENC_FPE:digits.",
+      description: FPEService.TOOL_DESCRIPTIONS.fpe_encrypt.description,
       inputSchema: {
-        value: z.string().describe("Input containing digits to encrypt; non-digits are stripped."),
-        user_token: z.string().optional().describe("Auth token (optional in authless/debug; header is preferred in HTTP)."),
+        value: z.string().describe(FPEService.TOOL_DESCRIPTIONS.fpe_encrypt.inputDescription),
+        user_token: z.string().optional().describe("Authentication token (required in test/production modes, optional in debug mode)"),
       },
     },
     async ({ value, user_token }, _ctx) => {
@@ -110,10 +109,10 @@ const getServer = (): McpServer => {
     "fpe_decrypt",
     {
       title: "FF3 FPE Decrypt",
-      description: "Decrypt ENC_FPE:digits back to original digits.",
+      description: FPEService.TOOL_DESCRIPTIONS.fpe_decrypt.description,
       inputSchema: {
-        value: z.string().describe("Value in ENC_FPE:digits format."),
-        user_token: z.string().optional().describe("Auth token (optional in authless/debug)."),
+        value: z.string().describe(FPEService.TOOL_DESCRIPTIONS.fpe_decrypt.inputDescription),
+        user_token: z.string().optional().describe("Authentication token (required in test/production modes, optional in debug mode)"),
       },
     },
     async ({ value, user_token }, _ctx) => {
