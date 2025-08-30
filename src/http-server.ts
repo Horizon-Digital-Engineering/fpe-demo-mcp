@@ -12,14 +12,14 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { InMemoryEventStore } from "@modelcontextprotocol/sdk/examples/shared/inMemoryEventStore.js";
-import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { McpError, ErrorCode, isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { FPEService } from "./FPEService.js";
 import { AuthService } from "./AuthService.js";
 
 // --------------------- Config ---------------------
 type AuthMode = "authless" | "debug" | "test" | "production";
 const PORT = Number(process.env.PORT ?? 8765);
-const HOST = process.env.HOST ?? "127.0.0.1";
+const HOST = process.env.HOST ?? "0.0.0.0";
 
 // Get version from package.json safely
 let version = "0.0.0";
@@ -60,110 +60,98 @@ function authorizeOrThrow(token?: string) {
   if (!jwtPayload) throw new McpError(ErrorCode.InvalidRequest, "Unauthorized (production mode: Bearer JWT required)");
 }
 
-// --------------------- MCP Server -----------------
-const server = new McpServer(
-  { name: "fpe-demo-mcp", version },
-  { capabilities: { tools: {} } }
-);
+// --------------------- MCP Server Factory (Official Pattern) -----------------
+const getServer = (): McpServer => {
+  const server = new McpServer({ name: "fpe-demo-mcp", version });
 
-// Register tools (auth via header or user_token fallback)
-server.registerTool(
-  "fpe_encrypt",
-  {
-    title: "FF3 FPE Encrypt",
-    description:
-      "Encrypt digits using FF3 (radix-10, 6–56 digits). Input normalized to digits only. Returns ENC_FPE:digits.",
-    inputSchema: {
-      value: z.string().describe("Input containing digits to encrypt; non-digits are stripped."),
-      user_token: z.string().optional().describe("Auth token (optional in authless/debug; header is preferred in HTTP)."),
+  // Register tools (auth via header or user_token fallback)
+  server.registerTool(
+    "fpe_encrypt",
+    {
+      title: "FF3 FPE Encrypt",
+      description:
+        "Encrypt digits using FF3 (radix-10, 6–56 digits). Input normalized to digits only. Returns ENC_FPE:digits.",
+      inputSchema: {
+        value: z.string().describe("Input containing digits to encrypt; non-digits are stripped."),
+        user_token: z.string().optional().describe("Auth token (optional in authless/debug; header is preferred in HTTP)."),
+      },
     },
-  },
-  async ({ value, user_token }, _ctx) => {
-    const timestamp = new Date().toISOString();
-    console.log(`\n📥 [HTTP] [${timestamp}] fpe_encrypt called:`);
-    console.log(`   Value: ${value}`);
-    console.log(`   User Token: ${user_token ? user_token.substring(0, 10) + '...' : 'undefined'}`);
-    
-    const headerToken = _ctx?._meta?.authorization as string | undefined; // <-- use _meta
-    console.log(`   Header Token: ${headerToken ? headerToken.substring(0, 20) + '...' : 'undefined'}`);
-    const token = headerToken || user_token;
-    
-    console.log(`🔐 [HTTP] Checking authorization for fpe_encrypt...`);
-    authorizeOrThrow(token);
-    console.log(`✅ [HTTP] Authorization successful for fpe_encrypt`);
+    async ({ value, user_token }, _ctx) => {
+      const timestamp = new Date().toISOString();
+      console.log(`\n📥 [HTTP] [${timestamp}] fpe_encrypt called:`);
+      console.log(`   Value: ${value}`);
+      console.log(`   User Token: ${user_token ? user_token.substring(0, 10) + '...' : 'undefined'}`);
+      
+      const headerToken = _ctx?._meta?.authorization as string | undefined;
+      console.log(`   Header Token: ${headerToken ? headerToken.substring(0, 20) + '...' : 'undefined'}`);
+      const token = headerToken || user_token;
+      
+      console.log(`🔐 [HTTP] Checking authorization for fpe_encrypt...`);
+      authorizeOrThrow(token);
+      console.log(`✅ [HTTP] Authorization successful for fpe_encrypt`);
 
-    if (!value) {
-      console.log(`❌ [HTTP] Missing required parameter: value`);
-      throw new McpError(ErrorCode.InvalidParams, "Missing required parameter: value");
+      if (!value) {
+        console.log(`❌ [HTTP] Missing required parameter: value`);
+        throw new McpError(ErrorCode.InvalidParams, "Missing required parameter: value");
+      }
+      
+      console.log(`🔒 [HTTP] Encrypting value: ${value}`);
+      const encrypted = fpe.encrypt(value);
+      console.log(`✅ [HTTP] Encryption successful: ${encrypted}`);
+      return {
+        content: [
+          { type: "text", text: `Encrypted: ${encrypted}\nAuth Mode: ${AUTH_MODE}\nNote: ENC_FPE: indicates FF3-encrypted digits.` },
+        ],
+      };
     }
-    
-    console.log(`🔒 [HTTP] Encrypting value: ${value}`);
-    const encrypted = fpe.encrypt(value);
-    console.log(`✅ [HTTP] Encryption successful: ${encrypted}`);
-    return {
-      content: [
-        { type: "text", text: `Encrypted: ${encrypted}\nAuth Mode: ${AUTH_MODE}\nNote: ENC_FPE: indicates FF3-encrypted digits.` },
-      ],
-    };
-  }
-);
+  );
 
-server.registerTool(
-  "fpe_decrypt",
-  {
-    title: "FF3 FPE Decrypt",
-    description: "Decrypt ENC_FPE:digits back to original digits.",
-    inputSchema: {
-      value: z.string().describe("Value in ENC_FPE:digits format."),
-      user_token: z.string().optional().describe("Auth token (optional in authless/debug)."),
+  server.registerTool(
+    "fpe_decrypt",
+    {
+      title: "FF3 FPE Decrypt",
+      description: "Decrypt ENC_FPE:digits back to original digits.",
+      inputSchema: {
+        value: z.string().describe("Value in ENC_FPE:digits format."),
+        user_token: z.string().optional().describe("Auth token (optional in authless/debug)."),
+      },
     },
-  },
-  async ({ value, user_token }, _ctx) => {
-    const timestamp = new Date().toISOString();
-    console.log(`\n📥 [HTTP] [${timestamp}] fpe_decrypt called:`);
-    console.log(`   Value: ${value}`);
-    console.log(`   User Token: ${user_token ? user_token.substring(0, 10) + '...' : 'undefined'}`);
-    
-    const headerToken = _ctx?._meta?.authorization as string | undefined; // <-- use _meta
-    console.log(`   Header Token: ${headerToken ? headerToken.substring(0, 20) + '...' : 'undefined'}`);
-    const token = headerToken || user_token;
-    
-    console.log(`🔐 [HTTP] Checking authorization for fpe_decrypt...`);
-    authorizeOrThrow(token);
-    console.log(`✅ [HTTP] Authorization successful for fpe_decrypt`);
+    async ({ value, user_token }, _ctx) => {
+      const timestamp = new Date().toISOString();
+      console.log(`\n📥 [HTTP] [${timestamp}] fpe_decrypt called:`);
+      console.log(`   Value: ${value}`);
+      console.log(`   User Token: ${user_token ? user_token.substring(0, 10) + '...' : 'undefined'}`);
+      
+      const headerToken = _ctx?._meta?.authorization as string | undefined;
+      console.log(`   Header Token: ${headerToken ? headerToken.substring(0, 20) + '...' : 'undefined'}`);
+      const token = headerToken || user_token;
+      
+      console.log(`🔐 [HTTP] Checking authorization for fpe_decrypt...`);
+      authorizeOrThrow(token);
+      console.log(`✅ [HTTP] Authorization successful for fpe_decrypt`);
 
-    if (!value) {
-      console.log(`❌ [HTTP] Missing required parameter: value`);
-      throw new McpError(ErrorCode.InvalidParams, "Missing required parameter: value");
+      if (!value) {
+        console.log(`❌ [HTTP] Missing required parameter: value`);
+        throw new McpError(ErrorCode.InvalidParams, "Missing required parameter: value");
+      }
+      
+      console.log(`🔓 [HTTP] Decrypting value: ${value}`);
+      const decrypted = fpe.decrypt(value);
+      console.log(`✅ [HTTP] Decryption successful: ${decrypted}`);
+      return {
+        content: [{ type: "text", text: `Decrypted: ${decrypted}\nAuth Mode: ${AUTH_MODE}` }],
+      };
     }
-    
-    console.log(`🔓 [HTTP] Decrypting value: ${value}`);
-    const decrypted = fpe.decrypt(value);
-    console.log(`✅ [HTTP] Decryption successful: ${decrypted}`);
-    return {
-      content: [{ type: "text", text: `Decrypted: ${decrypted}\nAuth Mode: ${AUTH_MODE}` }],
-    };
-  }
-);
+  );
 
-// Single transport instance (adapter mode; no port/host in options)
-const transport = new StreamableHTTPServerTransport({
-  eventStore: new InMemoryEventStore(),
-  sessionIdGenerator: () => randomUUID(),
-  // No CORS here — we'll do CORS in Express middleware
-});
+  return server;
+};
+
+// Map to store transports by session ID (official pattern)
+const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
 // Server readiness tracking
-let serverReady = false;
-
-// Connect (wrap in IIFE to avoid top-level await)
-(async () => {
-  await server.connect(transport);
-  serverReady = true;
-})().catch((err) => {
-  console.error("Failed to connect MCP server:", err);
-  process.exit(1);
-});
+let serverReady = true;
 
 // --------------------- Express (POST only) --------
 const app = express();
@@ -184,7 +172,11 @@ if (process.env.CORS_ORIGIN) {
 
     res.setHeader("Access-Control-Allow-Origin", allowOrigin);
     res.setHeader("Vary", "Origin");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
+    
+    // Only set credentials when origin is specific (not *)
+    if (allowOrigin !== "*") {
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+    }
 
     // Echo any requested headers (avoids preflight rejections)
     const reqHdrs = (req.headers["access-control-request-headers"] as string) || "";
@@ -192,8 +184,9 @@ if (process.env.CORS_ORIGIN) {
       "Accept, Content-Type, Authorization, MCP-Session-ID, mcp-session-id, Last-Event-ID";
     res.setHeader("Access-Control-Allow-Headers", [baseAllowed, reqHdrs].filter(Boolean).join(", "));
 
-    res.setHeader("Access-Control-Expose-Headers", "MCP-Session-ID, mcp-session-id");
-    res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+    // Match docs' canonical header casing
+    res.setHeader("Access-Control-Expose-Headers", "Mcp-Session-Id, mcp-session-id");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
 
     // Private Network Access (Chrome/Edge to 127.0.0.1 from HTTPS)
     if (req.headers["access-control-request-private-network"] === "true") {
@@ -205,50 +198,125 @@ if (process.env.CORS_ORIGIN) {
   });
 }
 
-// MCP endpoint (POST only). IMPORTANT: mount BEFORE express.json()
+// Parse JSON for MCP requests
+app.use(express.json({ limit: "10mb" }));
+
+// MCP POST endpoint (Official Streamable Pattern)
 app.post("/mcp", async (req, res) => {
-  const sessionId = req.headers["mcp-session-id"] as string;
-  const newSession = !sessionId;
-  const timestamp = new Date().toISOString();
-  
-  console.log(`\n🌐 [HTTP-MCP] [${timestamp}] Incoming MCP request:`);
-  console.log(`   Method: ${req.method}`);
-  console.log(`   Session ID: ${sessionId || 'NEW'}`);
-  console.log(`   User-Agent: ${req.headers['user-agent'] || 'unknown'}`);
-  console.log(`   Origin: ${req.headers.origin || 'none'}`);
-  console.log(`   Auth Header: ${req.headers.authorization ? req.headers.authorization.substring(0, 20) + '...' : 'none'}`);
-  
-  // Seed a session header if the client didn't provide one
-  if (newSession) {
-    const newSessionId = randomUUID();
-    res.setHeader("MCP-Session-ID", newSessionId);
-    console.log(`🔗 New MCP session created: ${newSessionId}`);
+  // Check for existing session ID (case-insensitive)
+  const sessionId = req.get('Mcp-Session-Id');
+  let transport: StreamableHTTPServerTransport;
+
+  if (sessionId && transports[sessionId]) {
+    // Reuse existing transport
+    transport = transports[sessionId];
+    console.log(`📡 Using existing transport for session: ${sessionId}`);
+  } else if (!sessionId && isInitializeRequest(req.body)) {
+    // New initialization request
+    console.log(`🔗 Creating new session for initialize request`);
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      eventStore: new InMemoryEventStore(),
+      onsessioninitialized: (sessionId) => {
+        // Store the transport by session ID
+        console.log(`Session initialized with ID: ${sessionId}`);
+        transports[sessionId] = transport;
+      }
+    });
+
+    // Clean up transport when closed
+    transport.onclose = () => {
+      if (transport.sessionId) {
+        console.log(`Transport closed for session ${transport.sessionId}, removing from transports map`);
+        delete transports[transport.sessionId];
+      }
+    };
+
+    const server = getServer();
+    // ... server setup already done in getServer() ...
+
+    // Connect to the MCP server
+    await server.connect(transport);
   } else {
-    console.log(`📡 Continuing MCP session: ${sessionId}`);
+    // Invalid request
+    console.log(`❌ Invalid request: sessionId=${sessionId}, isInit=${isInitializeRequest(req.body)}`);
+    res.status(400).json({
+      jsonrpc: '2.0',
+      error: {
+        code: -32000,
+        message: 'Bad Request: No valid session ID provided',
+      },
+      id: req.body?.id || null,
+    });
+    return;
+  }
+
+  // Echo session ID in response headers for convenience
+  if (transport.sessionId) {
+    res.setHeader('Mcp-Session-Id', transport.sessionId);
+  }
+
+  // Handle the request
+  await transport.handleRequest(req, res, req.body);
+});
+
+// GET endpoint for server→client notifications
+app.get("/mcp", async (req, res) => {
+  const sessionId = req.get('Mcp-Session-Id');
+  console.log(`GET request for session: ${sessionId || 'UNKNOWN'}`);
+  
+  if (!sessionId || !transports[sessionId]) {
+    return res.status(400).json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Session not found" },
+      id: null,
+    });
   }
   
   try {
-    console.log(`🔄 [HTTP-MCP] Processing request...`);
+    const transport = transports[sessionId];
     await transport.handleRequest(req, res);
-    console.log(`✅ [HTTP-MCP] Request completed successfully`);
   } catch (err) {
-    console.error(`🚨 [HTTP-MCP] Request error:`, err);
-    console.error(`   Error type: ${err instanceof Error ? err.constructor.name : typeof err}`);
-    console.error(`   Error message: ${err instanceof Error ? err.message : String(err)}`);
-    // Fallback error envelope (SDK usually handles this)
+    console.error(`GET request error:`, err);
     if (!res.headersSent) {
-      console.log(`📤 [HTTP-MCP] Sending fallback error response`);
-      res.status(400).json({
+      res.status(500).json({
         jsonrpc: "2.0",
-        error: { code: -32000, message: "Bad Request" },
+        error: { code: -32603, message: "Internal server error" },
         id: null,
       });
     }
   }
 });
 
-// NOW parse JSON for your other routes
-app.use(express.json({ limit: "10mb" }));
+// DELETE endpoint for session termination
+app.delete("/mcp", async (req, res) => {
+  const sessionId = req.get('Mcp-Session-Id');
+  console.log(`DELETE request for session: ${sessionId || 'UNKNOWN'}`);
+  
+  if (!sessionId || !transports[sessionId]) {
+    return res.status(400).json({
+      jsonrpc: "2.0",
+      error: { code: -32000, message: "Session not found" },
+      id: null,
+    });
+  }
+  
+  try {
+    const transport = transports[sessionId];
+    await transport.handleRequest(req, res);
+  } catch (err) {
+    console.error(`DELETE request error:`, err);
+    if (!res.headersSent) {
+      res.status(500).json({
+        jsonrpc: "2.0",
+        error: { code: -32603, message: "Internal server error" },
+        id: null,
+      });
+    }
+  }
+});
+
+// JSON parsing is already set up above for MCP endpoints
 
 // Health check with request logging
 app.get("/health", (req, res) => {

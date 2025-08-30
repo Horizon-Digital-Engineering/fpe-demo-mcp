@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Horizon Digital Engineering LLC
+ * Licensed under the Business Source License 1.1 (BSL).
+ * See the LICENSE file in the project root for details.
+ */
+
 // HTTP MCP Server test for the MCP-compliant Streamable HTTP server
 
 import { spawn, ChildProcess } from 'child_process';
@@ -22,7 +28,7 @@ class HTTPMCPClient {
 
   constructor(baseUrl: string = 'http://127.0.0.1:8765') {
     this.baseUrl = baseUrl;
-    this.sessionId = ''; // Will be set by server
+    this.sessionId = ''; // Will be set by server on first request
   }
 
   async sendRequest(request: MCPRequest): Promise<MCPResponse> {
@@ -30,11 +36,12 @@ class HTTPMCPClient {
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json, text/event-stream'
+      'Accept': 'application/json, text/event-stream'  // Required by StreamableHTTPServerTransport
     };
     
+    // Don't send session ID on first request - let server generate it
     if (this.sessionId) {
-      headers['MCP-Session-ID'] = this.sessionId;
+      headers['Mcp-Session-Id'] = this.sessionId;
     }
     
     const response = await fetch(url, {
@@ -44,11 +51,14 @@ class HTTPMCPClient {
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      const text = await response.text().catch(() => '');
+      throw new Error(`HTTP ${response.status}: ${response.statusText}${text ? ` — ${text}` : ''}`);
     }
 
     // Capture session ID from response header for subsequent requests
-    const responseSessionId = response.headers.get('MCP-Session-ID') || response.headers.get('mcp-session-id');
+    const responseSessionId = response.headers.get('Mcp-Session-Id') || 
+                              response.headers.get('MCP-Session-ID') || 
+                              response.headers.get('mcp-session-id');
     if (responseSessionId) {
       this.sessionId = responseSessionId;
     }
@@ -117,8 +127,8 @@ async function testHTTPServer(): Promise<void> {
     const health = await client.healthCheck();
     console.log(`Server status: ${health.status}, auth_mode: ${health.auth_mode}\n`);
 
-    // 2. Initialize MCP session
-    console.log('2. Initialize MCP session...');
+    // 2. Initialize session first (required for HTTP transport)
+    console.log('2. Initializing session...');
     const initResponse = await client.sendRequest({
       jsonrpc: '2.0',
       id: 1,
@@ -126,10 +136,11 @@ async function testHTTPServer(): Promise<void> {
       params: {
         protocolVersion: '2025-03-26',
         capabilities: {},
-        clientInfo: { name: 'http-test-client', version: '1.0.0' }
+        clientInfo: { name: 'http-test', version: '1.0' }
       }
     });
-    console.log('Initialize response:', JSON.stringify(initResponse, null, 2), '\n');
+    console.log('Initialized:', initResponse.result ? '✅' : '❌');
+    console.log();
 
     // 3. List tools
     console.log('3. List tools...');
@@ -158,12 +169,19 @@ async function testHTTPServer(): Promise<void> {
         arguments: { value: '123-45-6789' }
       }
     });
-    console.log('Encrypt response:', encryptResponse.result?.content?.[0]?.text || 'No content');
+    
+    // Extract the encrypted value from the response
+    const encText = encryptResponse.result?.content?.[0]?.text || '';
+    const match = encText.match(/Encrypted:\s*(ENC_FPE:\d+)/);
+    if (!match) {
+      throw new Error(`Didn't find ENC_FPE in: ${encText}`);
+    }
+    const encryptedValue = match[1];
+    console.log('Encrypt response:', encText);
     console.log();
 
-    // 5. Test decrypt
+    // 5. Test decrypt (round-trip the encrypted value)
     console.log('5. Test decrypt...');
-    const encryptedValue = 'ENC_FPE:096616337'; // Known test value
     const decryptResponse = await client.sendRequest({
       jsonrpc: '2.0',
       id: 4,

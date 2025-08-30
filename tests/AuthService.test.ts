@@ -1,3 +1,9 @@
+/*
+ * Copyright (c) 2025 Horizon Digital Engineering LLC
+ * Licensed under the Business Source License 1.1 (BSL).
+ * See the LICENSE file in the project root for details.
+ */
+
 // AuthService test - Test all authentication modes with current system
 
 import { spawn, ChildProcess } from 'child_process';

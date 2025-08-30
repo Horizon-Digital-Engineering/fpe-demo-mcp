@@ -1,5 +1,11 @@
 // FPEService test - understand pure digit behavior and FF3 limits
 
+/*
+ * Copyright (c) 2025 Horizon Digital Engineering LLC
+ * Licensed under the Business Source License 1.1 (BSL).
+ * See the LICENSE file in the project root for details.
+ */
+
 import { FPEService } from '../src/FPEService.js';
 
 function testFPEService() {
