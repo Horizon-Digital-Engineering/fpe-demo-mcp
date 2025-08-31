@@ -4,7 +4,34 @@
  * See the LICENSE file in the project root for details.
  */
 
-// MCP Client test for testing the FPE server
+/**
+ * Stdio MCP Client Example
+ * 
+ * This example demonstrates how to interact with the stdio MCP server using JSON-RPC over stdin/stdout.
+ * It shows the console-based testing approach that was used before migrating to Vitest framework.
+ * 
+ * Key Learning Points:
+ * - How to spawn and communicate with stdio MCP server processes
+ * - Writing JSON-RPC messages to stdin and reading responses from stdout
+ * - Handling the MCP protocol initialization handshake
+ * - Making tools/list and tools/call requests
+ * - Error handling for invalid parameters and unknown tools
+ * - Testing FF3 FPE encryption/decryption end-to-end
+ * - Working with line-based JSON message parsing
+ * 
+ * MCP Protocol Flow Demonstrated:
+ * 1. Initialize - establish protocol version and capabilities
+ * 2. List tools - discover available fpe_encrypt and fpe_decrypt tools
+ * 3. Call tools - perform actual encryption/decryption operations
+ * 4. Error scenarios - test validation and error handling
+ * 
+ * Usage:
+ * 1. Run `npm run build` to compile TypeScript
+ * 2. Run `node dist/examples/stdio-client-example.js` to execute
+ * 
+ * This is educational/example code - the actual tests now use Vitest framework
+ * (see tests/stdio-server.vitest.ts for the current test implementation)
+ */
 
 import { spawn, ChildProcess } from 'child_process';
 
@@ -22,11 +49,11 @@ class MCPClient {
   constructor(command: string, args: string[]) {
     this.process = spawn(command, args);
     
-    this.process.stdout?.on('data', (data) => {
+    this.process.stdout?.on('data', (data: Buffer) => {
       console.log('Server response:', data.toString());
     });
     
-    this.process.stderr?.on('data', (data) => {
+    this.process.stderr?.on('data', (data: Buffer) => {
       console.log('Server log:', data.toString());
     });
   }

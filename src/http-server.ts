@@ -150,7 +150,7 @@ const getServer = (): McpServer => {
 const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
 // Server readiness tracking
-let serverReady = true;
+const serverReady = true;
 
 // --------------------- Express (POST only) --------
 const app = express();

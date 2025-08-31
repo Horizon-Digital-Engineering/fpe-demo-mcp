@@ -33,7 +33,7 @@ export class AuthService {
   }
 
   /** Verify JWT token and return payload (null if invalid) */
-  private verifyJwt(token: string): any | null {
+  public verifyJwt(token: string): any | null {
     console.log(`🔐 [AUTH] Attempting JWT verification with token: ${token.substring(0, 20)}...`);
     try {
       const payload = jwt.verify(token, this.jwtSecret, { 

@@ -137,7 +137,7 @@ class MCPServer {
 
       try {        
         switch (name) {
-          case 'fpe_encrypt':
+          case 'fpe_encrypt': {
             console.log(`🔐 [STDIO] Checking authorization for fpe_encrypt...`);
             authorizeOrThrow(args); // Drop-in auth gate
             console.log(`✅ [STDIO] Authorization successful for fpe_encrypt`);
@@ -158,8 +158,9 @@ class MCPServer {
                 }
               ]
             };
+          }
 
-          case 'fpe_decrypt':
+          case 'fpe_decrypt': {
             console.log(`🔐 [STDIO] Checking authorization for fpe_decrypt...`);
             authorizeOrThrow(args); // Drop-in auth gate
             console.log(`✅ [STDIO] Authorization successful for fpe_decrypt`);
@@ -180,6 +181,7 @@ class MCPServer {
                 }
               ]
             };
+          }
 
           default:
             console.log(`❌ [STDIO] Unknown tool requested: ${name}`);

@@ -4,7 +4,27 @@
  * See the LICENSE file in the project root for details.
  */
 
-// HTTP MCP Server test for the MCP-compliant Streamable HTTP server
+/**
+ * HTTP MCP Client Example
+ * 
+ * This example demonstrates how to interact with the HTTP MCP server using raw HTTP requests.
+ * It shows the console-based testing approach that was used before migrating to Vitest framework.
+ * 
+ * Key Learning Points:
+ * - How to spawn and manage the HTTP MCP server process
+ * - Making HTTP POST requests to the /mcp endpoint
+ * - Handling MCP JSON-RPC protocol messages
+ * - Working with StreamableHTTPServerTransport session management
+ * - Testing health endpoints (/health, /ready, /live)
+ * - Error handling for invalid requests and missing parameters
+ * 
+ * Usage:
+ * 1. Run `npm run build` to compile TypeScript
+ * 2. Run `node dist/examples/http-client-example.js` to execute
+ * 
+ * This is educational/example code - the actual tests now use Vitest framework
+ * (see tests/http-server.vitest.ts for the current test implementation)
+ */
 
 import { spawn, ChildProcess } from 'child_process';
 
