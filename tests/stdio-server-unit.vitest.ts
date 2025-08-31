@@ -17,7 +17,7 @@ import { AuthService } from '../src/AuthService.js';
  */
 
 describe('Stdio Server Unit Tests', () => {
-  let originalEnv: NodeJS.ProcessEnv;
+  let originalEnv: typeof process.env;
 
   beforeEach(() => {
     originalEnv = { ...process.env };
