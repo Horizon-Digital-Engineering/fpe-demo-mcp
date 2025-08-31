@@ -14,7 +14,8 @@
     "resolveJsonModule": true,
     "declaration": false,
     "removeComments": true,
-    "sourceMap": false
+    "sourceMap": true,
+    "inlineSources": true
   },
   "include": [
     "src/**/*.ts",

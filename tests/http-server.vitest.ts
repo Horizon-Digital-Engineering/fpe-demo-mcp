@@ -18,18 +18,42 @@ describe('HTTP MCP Server', () => {
       env: { ...process.env, AUTH_MODE: 'authless', PORT: '8765' }
     });
 
-    // Wait for server to start
-    await new Promise((resolve) => {
-      server.stderr?.on('data', (data) => {
+    // Wait for server to start properly
+    await new Promise((resolve, reject) => {
+      let resolved = false;
+
+      server.stdout?.on('data', (data) => {
         const output = data.toString();
-        if (output.includes('FPE Demo MCP HTTP at')) {
+        if (output.includes('FPE Demo MCP HTTP at') && !resolved) {
+          resolved = true;
           resolve(undefined);
         }
       });
+
+      server.stderr?.on('data', (data) => {
+        const output = data.toString();
+        if (output.includes('FPE Demo MCP HTTP at') && !resolved) {
+          resolved = true;
+          resolve(undefined);
+        }
+      });
+
+      server.on('error', (err) => {
+        if (!resolved) {
+          resolved = true;
+          reject(err);
+        }
+      });
       
-      setTimeout(resolve, 3000); // Fallback timeout
+      // Give server time to start
+      setTimeout(() => {
+        if (!resolved) {
+          resolved = true;
+          resolve(undefined);
+        }
+      }, 5000);
     });
-  }, 10000);
+  }, 15000);
 
   afterAll(() => {
     if (server) {

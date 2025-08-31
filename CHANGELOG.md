@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Migrated from console-based tests to professional Vitest framework
+- Improved test coverage: FPEService to 97.4%, AuthService to 100%
+- Reorganized test structure with 54 comprehensive tests
+- Moved old console tests to examples/ as client interaction demos
+- Added separate build configuration for examples
+- Enhanced HTTP server test reliability with better startup handling
+
+### Added
+- Comprehensive error handling tests for edge cases
+- Client examples showing how to interact with both stdio and HTTP servers
+- Dedicated tsconfig for examples with optional compilation
+
 ## [1.0.0] - 2025-08-30
 
 ### Added
