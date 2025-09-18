@@ -46,7 +46,7 @@
     "jwt"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.4",
+    "@modelcontextprotocol/sdk": "^1.18.0",
     "express": "^5.1.0",
     "ff3": "^1.0.1",
     "jsonwebtoken": "^9.0.2",
