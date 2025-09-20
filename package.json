@@ -1,6 +1,6 @@
 {
   "name": "fpe-demo-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Demo MCP server showing FF3 Format Preserving Encryption + authentication patterns",
   "type": "module",
   "main": "dist/src/stdio-server.js",
