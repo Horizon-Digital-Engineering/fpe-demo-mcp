@@ -82,9 +82,20 @@ describe('HTTP MCP Server', () => {
     test('should respond to liveness check', async () => {
       const response = await fetch(`${baseUrl}/live`);
       const data = await response.json();
-      
+
       expect(response.status).toBe(200);
       expect(data.status).toBe('alive');
+    });
+
+    test('should respond to version check', async () => {
+      const response = await fetch(`${baseUrl}/version`);
+      const data = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(data.name).toBe('fpe-demo-mcp');
+      expect(data.version).toBeDefined();
+      expect(data.node).toMatch(/^v\d+\./);
+      expect(data.uptime_seconds).toBeGreaterThanOrEqual(0);
     });
   });
 

@@ -151,6 +151,7 @@ const transports: { [sessionId: string]: StreamableHTTPServerTransport } = {};
 
 // Server readiness tracking
 const serverReady = true;
+const startupTime = new Date();
 
 // --------------------- Express (POST only) --------
 const app = express();
@@ -359,6 +360,17 @@ app.get("/ready", (req, res) => {
 // Kubernetes liveness probe
 app.get("/live", (req, res) => {
   res.status(200).json({ status: "alive" });
+});
+
+// Version endpoint
+app.get("/version", (req, res) => {
+  const uptimeSeconds = Math.floor((Date.now() - startupTime.getTime()) / 1000);
+  res.json({
+    name: "fpe-demo-mcp",
+    version,
+    node: process.version,
+    uptime_seconds: uptimeSeconds,
+  });
 });
 
 // SIGTERM handler for platform shutdowns (K8s, Cloud Run, etc.)

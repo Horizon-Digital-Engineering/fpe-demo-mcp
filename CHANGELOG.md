@@ -7,18 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-16
+
 ### Changed
-- Migrated from console-based tests to professional Vitest framework
+- **BREAKING**: Minimum Node.js version increased from 18 to 20
+- Migrated from console-based tests to Vitest 4.x framework
 - Improved test coverage: FPEService to 97.4%, AuthService to 100%
-- Reorganized test structure with 54 comprehensive tests
+- Reorganized test structure with 69 comprehensive tests
 - Moved old console tests to examples/ as client interaction demos
-- Added separate build configuration for examples
-- Enhanced HTTP server test reliability with better startup handling
+- Enhanced HTTP server test reliability with sequential file execution
 
 ### Added
+- `/version` endpoint on HTTP server returning name, version, node version, and uptime
 - Comprehensive error handling tests for edge cases
 - Client examples showing how to interact with both stdio and HTTP servers
-- Dedicated tsconfig for examples with optional compilation
+- Proper TypeScript typing throughout (removed all `any` types)
+
+### Updated
+- zod: 3.25.76 → 4.3.5 (major version upgrade)
+- @modelcontextprotocol/sdk: 1.21.1 → 1.25.2
+- vitest: 3.2.4 → 4.0.17
+- @vitest/coverage-v8: 3.2.4 → 4.0.17
+- typescript: 5.8.3 → 5.9.3
+- Various other dependency updates
+
+### Security
+- Resolved all 8 Dependabot security alerts through dependency updates
 
 ## [1.0.0] - 2025-08-30
 
