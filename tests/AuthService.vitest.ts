@@ -167,16 +167,29 @@ describe('AuthService', () => {
     test('should prefer JWT over shared secret when both are valid', () => {
       process.env.AUTH_MODE = 'test';
       const auth = new AuthService('test-secret');
-      
+
       // Create a JWT that would decode successfully
       const validJWT = jwt.sign({ userId: 'jwt-user', role: 'admin' }, 'test-secret', { algorithm: 'HS256' });
-      
+
       const result = auth.verifyAuthorizationHeader(`Bearer ${validJWT}`);
-      
+
       // Should return JWT payload, not just boolean true
       expect(result).toBeTruthy();
       expect(typeof result).toBe('object');
       expect(result).toHaveProperty('userId', 'jwt-user');
+    });
+  });
+
+  describe('verifyJwt edge cases', () => {
+    test('should return null when JWT payload is a string instead of object', () => {
+      const auth = new AuthService('test-secret');
+
+      // jwt.sign with a string payload produces a JWT that decodes to a string
+      // This triggers the typeof payload === 'string' branch in verifyJwt
+      const stringPayloadJWT = jwt.sign('just-a-string-payload', 'test-secret', { algorithm: 'HS256' });
+
+      const result = auth.verifyJwt(stringPayloadJWT);
+      expect(result).toBeNull();
     });
   });
 });
