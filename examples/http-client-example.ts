@@ -26,20 +26,28 @@
  * (see tests/http-server.vitest.ts for the current test implementation)
  */
 
-import { spawn, ChildProcess } from 'child_process';
+import { spawn } from 'child_process';
 
 interface MCPRequest {
   jsonrpc: string;
   id: number;
   method: string;
-  params?: any;
+  params?: Record<string, unknown>;
+}
+
+interface MCPTool {
+  name: string;
+  description: string;
 }
 
 interface MCPResponse {
   jsonrpc: string;
   id: number;
-  result?: any;
-  error?: any;
+  result?: {
+    tools?: MCPTool[];
+    content?: Array<{ text: string }>;
+  };
+  error?: { message: string };
 }
 
 class HTTPMCPClient {
@@ -101,12 +109,12 @@ class HTTPMCPClient {
     }
   }
 
-  async healthCheck(): Promise<any> {
+  async healthCheck(): Promise<{ status: string; auth_mode: string }> {
     const response = await fetch(`${this.baseUrl}/health`);
     if (!response.ok) {
       throw new Error(`Health check failed: ${response.status}`);
     }
-    return await response.json();
+    return await response.json() as { status: string; auth_mode: string };
   }
 
   async cleanup(): Promise<void> {
@@ -172,7 +180,7 @@ async function testHTTPServer(): Promise<void> {
     });
     console.log('Tools available:', toolsResponse.result?.tools?.length || 0);
     if (toolsResponse.result?.tools) {
-      toolsResponse.result.tools.forEach((tool: any) => {
+      toolsResponse.result.tools.forEach((tool) => {
         console.log(`  - ${tool.name}: ${tool.description.substring(0, 60)}...`);
       });
     }

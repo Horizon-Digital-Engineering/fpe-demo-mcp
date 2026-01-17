@@ -5,7 +5,18 @@
  */
 
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { spawn } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
+
+interface JsonRpcResponse {
+  jsonrpc: string;
+  id: number;
+  result?: {
+    serverInfo?: { name: string; version: string };
+    tools?: Array<{ name: string }>;
+    content?: Array<{ text: string }>;
+  };
+  error?: { code: number; message: string };
+}
 
 describe('MCPServer - stdio-server', () => {
   let originalAuthMode: string | undefined;
@@ -19,14 +30,14 @@ describe('MCPServer - stdio-server', () => {
     process.env.AUTH_MODE = originalAuthMode;
   });
 
-  const sendJsonRpc = (child: any, method: string, params?: any, id = 1) => {
+  const sendJsonRpc = (child: ChildProcess, method: string, params?: Record<string, unknown>, id = 1) => {
     const request = {
       jsonrpc: '2.0',
       id,
       method,
       params
     };
-    child.stdin.write(JSON.stringify(request) + '\n');
+    child.stdin?.write(JSON.stringify(request) + '\n');
   };
 
   describe('integration tests via spawn', () => {
@@ -35,7 +46,7 @@ describe('MCPServer - stdio-server', () => {
         env: { ...process.env, AUTH_MODE: 'authless' }
       });
 
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<JsonRpcResponse>((resolve, reject) => {
         let responseReceived = false;
 
         child.stdout.on('data', (data) => {
@@ -50,7 +61,7 @@ describe('MCPServer - stdio-server', () => {
                 resolve(response);
                 return;
               }
-            } catch (e) {
+            } catch {
               // Ignore non-JSON lines (server logs)
             }
           }
@@ -78,8 +89,8 @@ describe('MCPServer - stdio-server', () => {
         }, 5000);
       });
 
-      expect(result.result.serverInfo.name).toBe('fpe-demo-mcp');
-      expect(result.result.serverInfo.version).toBeDefined();
+      expect(result.result?.serverInfo?.name).toBe('fpe-demo-mcp');
+      expect(result.result?.serverInfo?.version).toBeDefined();
     }, 10000);
 
     test('should handle tools/list request', async () => {
@@ -87,7 +98,7 @@ describe('MCPServer - stdio-server', () => {
         env: { ...process.env, AUTH_MODE: 'authless' }
       });
 
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<JsonRpcResponse>((resolve, reject) => {
         let initDone = false;
         let listReceived = false;
 
@@ -110,7 +121,7 @@ describe('MCPServer - stdio-server', () => {
                 resolve(response);
                 return;
               }
-            } catch (e) {
+            } catch {
               // Ignore non-JSON lines
             }
           }
@@ -138,10 +149,10 @@ describe('MCPServer - stdio-server', () => {
         }, 10000);
       });
 
-      expect(Array.isArray(result.result.tools)).toBe(true);
-      expect(result.result.tools.length).toBe(2);
-      expect(result.result.tools[0].name).toBe('fpe_encrypt');
-      expect(result.result.tools[1].name).toBe('fpe_decrypt');
+      expect(Array.isArray(result.result?.tools)).toBe(true);
+      expect(result.result?.tools?.length).toBe(2);
+      expect(result.result?.tools?.[0].name).toBe('fpe_encrypt');
+      expect(result.result?.tools?.[1].name).toBe('fpe_decrypt');
     }, 15000);
 
     test('should handle missing parameter error', async () => {
@@ -149,7 +160,7 @@ describe('MCPServer - stdio-server', () => {
         env: { ...process.env, AUTH_MODE: 'authless' }
       });
 
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<JsonRpcResponse>((resolve, reject) => {
         let initDone = false;
         let errorReceived = false;
 
@@ -175,7 +186,7 @@ describe('MCPServer - stdio-server', () => {
                 resolve(response);
                 return;
               }
-            } catch (e) {
+            } catch {
               // Ignore non-JSON lines
             }
           }
@@ -203,8 +214,8 @@ describe('MCPServer - stdio-server', () => {
         }, 10000);
       });
 
-      expect(result.error.code).toBe(-32602); // InvalidParams
-      expect(result.error.message).toContain('Missing required parameter: value');
+      expect(result.error?.code).toBe(-32602); // InvalidParams
+      expect(result.error?.message).toContain('Missing required parameter: value');
     }, 15000);
 
     test('should handle unknown tool error', async () => {
@@ -212,7 +223,7 @@ describe('MCPServer - stdio-server', () => {
         env: { ...process.env, AUTH_MODE: 'authless' }
       });
 
-      const result = await new Promise<any>((resolve, reject) => {
+      const result = await new Promise<JsonRpcResponse>((resolve, reject) => {
         let initDone = false;
         let errorReceived = false;
 
@@ -238,7 +249,7 @@ describe('MCPServer - stdio-server', () => {
                 resolve(response);
                 return;
               }
-            } catch (e) {
+            } catch {
               // Ignore non-JSON lines
             }
           }
@@ -266,8 +277,8 @@ describe('MCPServer - stdio-server', () => {
         }, 10000);
       });
 
-      expect(result.error.code).toBe(-32601); // MethodNotFound
-      expect(result.error.message).toContain('Unknown tool: unknown_tool');
+      expect(result.error?.code).toBe(-32601); // MethodNotFound
+      expect(result.error?.message).toContain('Unknown tool: unknown_tool');
     }, 15000);
 
     test('should handle successful encryption/decryption', async () => {
@@ -275,12 +286,12 @@ describe('MCPServer - stdio-server', () => {
         env: { ...process.env, AUTH_MODE: 'authless' }
       });
 
-      const results = await new Promise<any[]>((resolve, reject) => {
+      const results = await new Promise<JsonRpcResponse[]>((resolve, reject) => {
         let initDone = false;
         let encryptDone = false;
         let decryptDone = false;
         let encryptedValue = '';
-        const responses: any[] = [];
+        const responses: JsonRpcResponse[] = [];
 
         child.stdout.on('data', (data) => {
           const lines = data.toString().split('\n').filter((line: string) => line.trim());
@@ -322,7 +333,7 @@ describe('MCPServer - stdio-server', () => {
                 resolve(responses);
                 return;
               }
-            } catch (e) {
+            } catch {
               // Ignore non-JSON lines
             }
           }
@@ -351,11 +362,11 @@ describe('MCPServer - stdio-server', () => {
       });
 
       // Check encrypt response
-      expect(results[0].result.content[0].text).toContain('Encrypted:');
-      expect(results[0].result.content[0].text).toContain('ENC_FPE:');
-      
+      expect(results[0].result?.content?.[0].text).toContain('Encrypted:');
+      expect(results[0].result?.content?.[0].text).toContain('ENC_FPE:');
+
       // Check decrypt response
-      expect(results[1].result.content[0].text).toContain('Decrypted: 123456789');
+      expect(results[1].result?.content?.[0].text).toContain('Decrypted: 123456789');
     }, 20000);
   });
 });

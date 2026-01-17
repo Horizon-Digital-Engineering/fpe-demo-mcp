@@ -31,8 +31,8 @@ const fpeService = new FPEService('', ''); // Uses demo keys for POC
 const auth = new AuthService(process.env.AUTH_TOKEN || 'demo-secret'); // also uses AUTH_JWT_SECRET internally
 
 // Drop-in auth-mode gate (copy/paste pattern)
-function authorizeOrThrow(args: any) {
-  const token = (args?.user_token as string) || ''; // MCP: pass token in tool args
+function authorizeOrThrow(args?: Record<string, unknown>) {
+  const token = (args?.user_token as string) ?? ''; // MCP: pass token in tool args
   
   // In authless or debug mode, allow all requests
   if (AUTH_MODE === 'authless' || AUTH_MODE === 'debug') {

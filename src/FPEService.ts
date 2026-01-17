@@ -8,7 +8,13 @@
 import { createRequire } from 'module';
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 const require = createRequire(import.meta.url);
-const FF3Cipher = require('ff3/lib/FF3Cipher');
+const FF3Cipher = require('ff3/lib/FF3Cipher') as new (key: string, tweak: string, radix: number) => FF3CipherInstance;
+
+// Interface for the FF3Cipher instance (no official types available)
+interface FF3CipherInstance {
+  encrypt(plaintext: string): string;
+  decrypt(ciphertext: string): string;
+}
 
 // FF3 constants for radix-10 (digits only)
 const RADIX = 10;            // digits only
@@ -28,7 +34,7 @@ class FPEService {
     }
   };
 
-  private cipher: any;
+  private cipher: FF3CipherInstance;
   private key: string;
   private tweak: string;
 

@@ -94,13 +94,13 @@ describe('Stdio Server Unit Tests', () => {
   describe('Tool Logic Coverage', () => {
     test('should test encryption tool logic', () => {
       const fpeService = new FPEService('', '');
-      
-      const encryptTool = (args: any) => {
+
+      const encryptTool = (args: { value?: string }) => {
         if (!args?.value) {
           throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: value');
         }
-        
-        const encrypted = fpeService.encrypt(args.value as string);
+
+        const encrypted = fpeService.encrypt(args.value);
         return {
           content: [{
             type: 'text',
@@ -116,7 +116,7 @@ describe('Stdio Server Unit Tests', () => {
     });
 
     test('should test error handling patterns', () => {
-      const errorHandler = (toolName: string) => {
+      const errorHandler = (_toolName: string) => {
         try {
           throw new Error('FPE radix-10 requires 6-56 digits');
         } catch (error) {

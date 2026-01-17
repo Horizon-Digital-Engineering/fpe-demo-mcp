@@ -7,7 +7,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { FPEService } from '../src/FPEService.js';
-import { AuthService } from '../src/AuthService.js';
 
 /**
  * HTTP Server Unit Tests - Essential Coverage
@@ -94,7 +93,7 @@ describe('HTTP Server Unit Tests', () => {
         if (authMode === 'authless' || authMode === 'debug') return;
 
         const isBearer = token?.startsWith('Bearer ');
-        const bearerValue = isBearer ? token!.slice('Bearer '.length).trim() : undefined;
+        const bearerValue = isBearer && token ? token.slice('Bearer '.length).trim() : undefined;
         const jwtPayload = null; // Mock JWT as null
 
         if (authMode === 'test') {
@@ -123,12 +122,14 @@ describe('HTTP Server Unit Tests', () => {
 
   describe('Tool Handler Logic Coverage', () => {
     test('should test tool handler patterns directly', () => {
-      // Use the imported services directly to test tool logic patterns      
+      // Use the imported services directly to test tool logic patterns
       const fpe = new FPEService('', '');
-      const auth = new AuthService('test-secret');
-      
+      // AuthService imported but tested separately in AuthService.vitest.ts
+
       // Test the encryption tool handler logic
-      const mockEncryptHandler = ({ value, user_token }: any, _ctx?: any) => {
+      interface ToolArgs { value?: string; user_token?: string }
+      interface ToolContext { _meta?: { authorization?: string } }
+      const mockEncryptHandler = ({ value, user_token }: ToolArgs, _ctx?: ToolContext) => {
         // Simulate authorizeOrThrow logic
         const headerToken = _ctx?._meta?.authorization;
         const token = headerToken || user_token;
@@ -161,7 +162,7 @@ describe('HTTP Server Unit Tests', () => {
       expect(result.content[0].text).toContain('Encrypted:');
       
       // Test decrypt handler pattern
-      const mockDecryptHandler = ({ value }: any) => {
+      const mockDecryptHandler = ({ value }: ToolArgs) => {
         if (!value) throw new McpError(ErrorCode.InvalidParams, 'Missing required parameter: value');
         const decrypted = fpe.decrypt(value);
         return {

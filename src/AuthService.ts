@@ -33,16 +33,20 @@ export class AuthService {
   }
 
   /** Verify JWT token and return payload (null if invalid) */
-  public verifyJwt(token: string): any | null {
+  public verifyJwt(token: string): jwt.JwtPayload | null {
     console.log(`🔐 [AUTH] Attempting JWT verification with token: ${token.substring(0, 20)}...`);
     try {
-      const payload = jwt.verify(token, this.jwtSecret, { 
+      const payload = jwt.verify(token, this.jwtSecret, {
         algorithms: ['HS256'],
         ...(process.env.AUTH_JWT_ISS ? { issuer: process.env.AUTH_JWT_ISS } : {}),
         ...(process.env.AUTH_JWT_AUD ? { audience: process.env.AUTH_JWT_AUD } : {}),
         clockTolerance: 5
       });
       console.log(`✅ [AUTH] JWT verification successful:`, payload);
+      // jwt.verify can return string or JwtPayload; we only want the object form
+      if (typeof payload === 'string') {
+        return null;
+      }
       return payload;
     } catch (error) {
       console.log(`❌ [AUTH] JWT verification failed:`, error instanceof Error ? error.message : error);
@@ -55,7 +59,7 @@ export class AuthService {
    * Extract Bearer token and verify (returns payload for JWT, true for shared secret)
    * Supports all auth modes: authless, debug, test, production
    */
-  verifyAuthorizationHeader(authHeader?: string): any | boolean {
+  verifyAuthorizationHeader(authHeader?: string): jwt.JwtPayload | boolean {
     const authMode = process.env.AUTH_MODE || 'authless';
     console.log(`🔐 [AUTH] Authorization header verification - Mode: ${authMode}`);
     
@@ -93,7 +97,7 @@ export class AuthService {
     if (authMode === 'production') {
       const result = this.verifyJwt(token);
       console.log(`${result ? '✅' : '❌'} [AUTH] Production mode - JWT verification: ${!!result}`);
-      return result;
+      return result ?? false;
     }
     
     console.log(`❌ [AUTH] Unknown auth mode: ${authMode}`);

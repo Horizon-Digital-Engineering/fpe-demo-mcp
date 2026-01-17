@@ -42,10 +42,10 @@ function authorizeOrThrow(token?: string) {
   if (AUTH_MODE === "authless" || AUTH_MODE === "debug") return;
 
   const isBearer = token?.startsWith("Bearer ");
-  const bearerValue = isBearer ? token!.slice("Bearer ".length).trim() : undefined;
+  const bearerValue = isBearer && token ? token.slice("Bearer ".length).trim() : undefined;
 
   // Try JWT first if it's Bearer
-  const jwtPayload = isBearer ? auth.verifyAuthorizationHeader(token!) : null;
+  const jwtPayload = isBearer && token ? auth.verifyAuthorizationHeader(token) : null;
 
   if (AUTH_MODE === "test") {
     const shared = process.env.AUTH_TOKEN || "demo-secret";

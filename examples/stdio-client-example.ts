@@ -39,7 +39,7 @@ interface MCPRequest {
   jsonrpc: string;
   id: number;
   method: string;
-  params?: any;
+  params?: Record<string, unknown>;
 }
 
 class MCPClient {
@@ -58,7 +58,7 @@ class MCPClient {
     });
   }
 
-  sendRequest(method: string, params: any = {}): void {
+  sendRequest(method: string, params: Record<string, unknown> = {}): void {
     const request: MCPRequest = {
       jsonrpc: "2.0",
       id: this.requestId++,

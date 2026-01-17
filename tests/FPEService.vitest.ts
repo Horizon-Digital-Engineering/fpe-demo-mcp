@@ -144,8 +144,8 @@ describe('FPEService', () => {
     test('should include proper error codes', () => {
       try {
         fpe.encrypt('');
-      } catch (error: any) {
-        expect(error.code).toBe(-32602); // InvalidParams
+      } catch (error) {
+        expect((error as McpError).code).toBe(-32602); // InvalidParams
       }
     });
   });
@@ -182,7 +182,7 @@ describe('FPEService', () => {
       } catch (error) {
         // Should be wrapped in McpError
         expect(error).toBeInstanceOf(McpError);
-        expect((error as any).message).toContain('FPE decryption failed');
+        expect((error as McpError).message).toContain('FPE decryption failed');
       }
     });
 
@@ -196,7 +196,7 @@ describe('FPEService', () => {
         differentService.decrypt(encrypted); // This should fail due to different keys
       } catch (error) {
         expect(error).toBeInstanceOf(McpError);
-        expect((error as any).message).toContain('FPE decryption failed');
+        expect((error as McpError).message).toContain('FPE decryption failed');
       }
     });
   });
