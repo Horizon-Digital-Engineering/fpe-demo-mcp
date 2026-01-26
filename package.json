@@ -55,7 +55,7 @@
   "devDependencies": {
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.6",
-    "@types/node": "^24.10.0",
+    "@types/node": "^25.0.10",
     "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.46.3",
     "@vitest/coverage-v8": "^4.0.17",
